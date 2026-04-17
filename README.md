@@ -194,6 +194,13 @@ PrivacyGuard/
 
 ---
 
+## 👥 Core Team / Creators
+
+- **Karthik Sai** - [@KarthikSai06](https://github.com/KarthikSai06)
+- **Nikhil Gowda** - [@Nikhil-gowda2005](https://github.com/Nikhil-gowda2005)
+
+---
+
 ## 🤝 Contributing
 
 Contributions, issues and feature requests are welcome!
