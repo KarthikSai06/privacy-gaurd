@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">PrivacyGuard</string>
+    <string name="onboarding_title">PrivacyGuard</string>
+    <string name="onboarding_subtitle">Real-time Device Privacy Monitor</string>
+    <string name="permission_required">Usage Access Permission Required</string>
+    <string name="permission_explanation">PrivacyGuard needs the Usage Access permission to monitor which apps are running in the background, accessing the microphone, and performing suspicious activity. This data is stored locally and never shared.</string>
+    <string name="grant_permission">Grant Usage Access</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="mic_usage_title">Microphone Usage</string>
+    <string name="keylogger_title">Keylogger Detector</string>
+    <string name="night_activity_title">Night Activity</string>
+    <string name="trigger_map_title">App Trigger Map</string>
+    <string name="settings_title">Settings</string>
+    <string name="no_data">No data available yet. Run a scan to populate results.</string>
+    <string name="scan_now">Scan Now</string>
+    <string name="last_scan">Last scan</string>
+    <string name="notification_channel_name">Privacy Alerts</string>
+    <string name="notification_suspicious_title">Suspicious Accessibility App Detected</string>
+</resources>
