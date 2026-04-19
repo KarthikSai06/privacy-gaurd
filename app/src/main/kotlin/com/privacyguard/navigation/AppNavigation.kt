@@ -7,6 +7,8 @@ import androidx.navigation.compose.rememberNavController
 import com.privacyguard.ui.screens.dashboard.DashboardScreen
 import com.privacyguard.ui.screens.keylogger.KeyloggerScreen
 import com.privacyguard.ui.screens.micusage.MicUsageScreen
+import com.privacyguard.ui.screens.camera.CameraUsageScreen
+import com.privacyguard.ui.screens.location.LocationUsageScreen
 import com.privacyguard.ui.screens.nightactivity.NightActivityScreen
 import com.privacyguard.ui.screens.onboarding.OnboardingScreen
 import com.privacyguard.ui.screens.settings.SettingsScreen
@@ -16,6 +18,8 @@ sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
     object Dashboard : Screen("dashboard")
     object MicUsage : Screen("mic_usage")
+    object CameraUsage: Screen("camera_usage")
+    object LocationUsage: Screen("location_usage")
     object Keylogger : Screen("keylogger")
     object NightActivity : Screen("night_activity")
     object TriggerMap : Screen("trigger_map")
@@ -40,6 +44,8 @@ fun AppNavigation() {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
                 onNavigateMic = { navController.navigate(Screen.MicUsage.route) },
+                onNavigateCamera = { navController.navigate(Screen.CameraUsage.route) },
+                onNavigateLocation = { navController.navigate(Screen.LocationUsage.route) },
                 onNavigateKeylogger = { navController.navigate(Screen.Keylogger.route) },
                 onNavigateNight = { navController.navigate(Screen.NightActivity.route) },
                 onNavigateTrigger = { navController.navigate(Screen.TriggerMap.route) },
@@ -48,6 +54,12 @@ fun AppNavigation() {
         }
         composable(Screen.MicUsage.route) {
             MicUsageScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.CameraUsage.route) {
+            CameraUsageScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.LocationUsage.route) {
+            LocationUsageScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Keylogger.route) {
             KeyloggerScreen(onBack = { navController.popBackStack() })

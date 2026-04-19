@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.privacyguard.data.db.AppDatabase
 import com.privacyguard.data.db.dao.AccessibilityDao
+import com.privacyguard.data.db.dao.CameraUsageDao
+import com.privacyguard.data.db.dao.LocationUsageDao
 import com.privacyguard.data.db.dao.MicUsageDao
 import com.privacyguard.data.db.dao.NightActivityDao
 import com.privacyguard.data.db.dao.TriggerPairDao
@@ -27,6 +29,12 @@ object DatabaseModule {
 
     @Provides
     fun provideMicUsageDao(db: AppDatabase): MicUsageDao = db.micUsageDao()
+    
+    @Provides
+    fun provideCameraUsageDao(db: AppDatabase): CameraUsageDao = db.cameraUsageDao()
+    
+    @Provides
+    fun provideLocationUsageDao(db: AppDatabase): LocationUsageDao = db.locationUsageDao()
 
     @Provides
     fun provideAccessibilityDao(db: AppDatabase): AccessibilityDao = db.accessibilityDao()

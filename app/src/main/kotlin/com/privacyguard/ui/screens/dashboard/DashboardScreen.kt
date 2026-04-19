@@ -23,6 +23,8 @@ import java.util.*
 @Composable
 fun DashboardScreen(
     onNavigateMic: () -> Unit,
+    onNavigateCamera: () -> Unit,
+    onNavigateLocation: () -> Unit,
     onNavigateKeylogger: () -> Unit,
     onNavigateNight: () -> Unit,
     onNavigateTrigger: () -> Unit,
@@ -82,17 +84,42 @@ fun DashboardScreen(
                     }
                 }
 
-                SectionHeader("PRIVACY OVERVIEW")
-                Spacer(Modifier.height(8.dp))
+                // Privacy Score Overview
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val scoreColor = when {
+                        state.privacyScore > 80 -> AccentGreen
+                        state.privacyScore > 50 -> AccentAmber
+                        else -> AccentRed
+                    }
+                    CircularProgressIndicator(
+                        progress = state.privacyScore / 100f,
+                        modifier = Modifier.size(120.dp),
+                        color = scoreColor,
+                        strokeWidth = 8.dp,
+                        trackColor = SurfaceLight
+                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${state.privacyScore}", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Text("Score", fontSize = 12.sp, color = TextSecondary)
+                    }
+                }
 
-                StatCard(
-                    icon = Icons.Filled.Mic,
-                    label = "Apps used mic today",
-                    value = state.micAppsToday.toString(),
-                    accentColor = AccentCyan,
-                    onClick = onNavigateMic
+                SectionHeader(title = "SURVEILLANCE PROTECTION", icon = Icons.Filled.Security)
+                Spacer(Modifier.height(8.dp))
+                SensorGridBlock(
+                    state = state,
+                    onNavigateMic = onNavigateMic,
+                    onNavigateCamera = onNavigateCamera,
+                    onNavigateLocation = onNavigateLocation
                 )
-                Spacer(Modifier.height(10.dp))
+
+                Spacer(Modifier.height(16.dp))
+                SectionHeader(title = "BEHAVIORAL ANALYSIS", icon = Icons.Filled.Analytics)
+                Spacer(Modifier.height(8.dp))
+                
                 StatCard(
                     icon = Icons.Filled.Accessible,
                     label = "Suspicious accessibility apps",
@@ -116,6 +143,19 @@ fun DashboardScreen(
                     accentColor = AccentCyan,
                     onClick = onNavigateTrigger
                 )
+
+                Spacer(Modifier.height(24.dp))
+                SectionHeader("LIVE INCIDENTS")
+                Spacer(Modifier.height(8.dp))
+
+                if (state.recentIncidents.isEmpty()) {
+                    Text("No recent tracking incidents detected.", color = TextMuted, fontSize = 14.sp)
+                } else {
+                    state.recentIncidents.forEach { incident ->
+                        LiveIncidentItem(incident = incident)
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
 
                 Spacer(Modifier.height(24.dp))
                 SectionHeader("QUICK ACTIONS")
@@ -145,6 +185,122 @@ fun DashboardScreen(
 
                 Spacer(Modifier.height(24.dp))
             }
+        }
+    }
+}
+
+@Composable
+fun LiveIncidentItem(incident: LiveIncident) {
+    val (icon, color) = when (incident.type) {
+        "Mic" -> Icons.Filled.Mic to AccentCyan
+        "Camera" -> Icons.Filled.CameraAlt to AccentAmber
+        else -> Icons.Filled.LocationOn to AccentCyan // Location
+    }
+
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(color.copy(0.12f), androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(incident.appName, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                val fmt = SimpleDateFormat("h:mm a, MMM d", Locale.getDefault())
+                Text("Used ${incident.type} at ${fmt.format(Date(incident.timestamp))}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
+        }
+    }
+}
+
+@Composable
+fun SensorGridBlock(
+    state: DashboardUiState,
+    onNavigateMic: () -> Unit,
+    onNavigateCamera: () -> Unit,
+    onNavigateLocation: () -> Unit
+) {
+    val totalUsage = state.micAppsToday + state.cameraAppsToday + state.locationAppsToday
+    
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Total Sensor Usage", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                Text(totalUsage.toString(), color = AccentAmber, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+            }
+            Spacer(Modifier.height(16.dp))
+            
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                SensorSquare(
+                    icon = Icons.Filled.CameraAlt,
+                    label = "Camera\nUsage",
+                    value = state.cameraAppsToday.toString(),
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateCamera
+                )
+                SensorSquare(
+                    icon = Icons.Filled.Mic,
+                    label = "Mic\nUsage",
+                    value = state.micAppsToday.toString(),
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateMic
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                SensorSquare(
+                    icon = Icons.Filled.LocationOn,
+                    label = "Location\nUsage",
+                    value = state.locationAppsToday.toString(),
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateLocation
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
+            
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { /* Placeholder for block feature */ },
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight, contentColor = TextPrimary),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+            ) {
+                Text("Blocking Options", fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SensorSquare(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, onClick: () -> Unit, modifier: Modifier) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(100.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+        color = SurfaceLight
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(icon, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(label, color = TextPrimary, fontSize = 12.sp, lineHeight = 14.sp)
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(value, color = AccentAmber, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
