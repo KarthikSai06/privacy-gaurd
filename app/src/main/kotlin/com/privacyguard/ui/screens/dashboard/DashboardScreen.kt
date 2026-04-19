@@ -1,8 +1,12 @@
 package com.privacyguard.ui.screens.dashboard
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -10,7 +14,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +38,8 @@ fun DashboardScreen(
     onNavigateNight: () -> Unit,
     onNavigateTrigger: () -> Unit,
     onNavigateSettings: () -> Unit,
+    onNavigateReport: () -> Unit = {},
+    onNavigateAi: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -84,42 +95,48 @@ fun DashboardScreen(
                     }
                 }
 
-                // Privacy Score Overview
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val scoreColor = when {
-                        state.privacyScore > 80 -> AccentGreen
-                        state.privacyScore > 50 -> AccentAmber
-                        else -> AccentRed
+                // ── Privacy Score Ring ──────────────────────────────────────
+                PrivacyScoreCard(score = state.privacyScore)
+                Spacer(Modifier.height(20.dp))
+
+                // Recent incidents strip
+                if (state.recentIncidents.isNotEmpty()) {
+                    SectionHeader("RECENT INCIDENTS")
+                    Spacer(Modifier.height(8.dp))
+                    state.recentIncidents.take(3).forEach { incident ->
+                        IncidentChip(incident)
+                        Spacer(Modifier.height(6.dp))
                     }
-                    CircularProgressIndicator(
-                        progress = state.privacyScore / 100f,
-                        modifier = Modifier.size(120.dp),
-                        color = scoreColor,
-                        strokeWidth = 8.dp,
-                        trackColor = SurfaceLight
-                    )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("${state.privacyScore}", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Text("Score", fontSize = 12.sp, color = TextSecondary)
-                    }
+                    Spacer(Modifier.height(12.dp))
                 }
 
-                SectionHeader(title = "SURVEILLANCE PROTECTION", icon = Icons.Filled.Security)
+                SectionHeader("PRIVACY OVERVIEW")
                 Spacer(Modifier.height(8.dp))
-                SensorGridBlock(
-                    state = state,
-                    onNavigateMic = onNavigateMic,
-                    onNavigateCamera = onNavigateCamera,
-                    onNavigateLocation = onNavigateLocation
-                )
 
-                Spacer(Modifier.height(16.dp))
-                SectionHeader(title = "BEHAVIORAL ANALYSIS", icon = Icons.Filled.Analytics)
-                Spacer(Modifier.height(8.dp))
-                
+                StatCard(
+                    icon = Icons.Filled.Mic,
+                    label = "Apps used mic today",
+                    value = state.micAppsToday.toString(),
+                    accentColor = AccentCyan,
+                    onClick = onNavigateMic
+                )
+                Spacer(Modifier.height(10.dp))
+                StatCard(
+                    icon = Icons.Filled.CameraAlt,
+                    label = "Apps used camera today",
+                    value = state.cameraAppsToday.toString(),
+                    accentColor = AccentAmber,
+                    onClick = onNavigateCamera
+                )
+                Spacer(Modifier.height(10.dp))
+                StatCard(
+                    icon = Icons.Filled.LocationOn,
+                    label = "Apps queried location today",
+                    value = state.locationAppsToday.toString(),
+                    accentColor = AccentGreen,
+                    onClick = onNavigateLocation
+                )
+                Spacer(Modifier.height(10.dp))
                 StatCard(
                     icon = Icons.Filled.Accessible,
                     label = "Suspicious accessibility apps",
@@ -143,19 +160,6 @@ fun DashboardScreen(
                     accentColor = AccentCyan,
                     onClick = onNavigateTrigger
                 )
-
-                Spacer(Modifier.height(24.dp))
-                SectionHeader("LIVE INCIDENTS")
-                Spacer(Modifier.height(8.dp))
-
-                if (state.recentIncidents.isEmpty()) {
-                    Text("No recent tracking incidents detected.", color = TextMuted, fontSize = 14.sp)
-                } else {
-                    state.recentIncidents.forEach { incident ->
-                        LiveIncidentItem(incident = incident)
-                        Spacer(Modifier.height(10.dp))
-                    }
-                }
 
                 Spacer(Modifier.height(24.dp))
                 SectionHeader("QUICK ACTIONS")
@@ -183,6 +187,28 @@ fun DashboardScreen(
                     }
                 }
 
+                Spacer(Modifier.height(10.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = onNavigateReport,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentAmber)
+                    ) {
+                        Icon(Icons.Filled.PictureAsPdf, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("PDF Report")
+                    }
+                    OutlinedButton(
+                        onClick = onNavigateAi,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentCyan)
+                    ) {
+                        Icon(Icons.Filled.Psychology, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("AI Insights")
+                    }
+                }
+
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -190,117 +216,116 @@ fun DashboardScreen(
 }
 
 @Composable
-fun LiveIncidentItem(incident: LiveIncident) {
+fun PrivacyScoreCard(score: Int) {
+    val scoreColor = when {
+        score >= 80 -> AccentGreen
+        score >= 50 -> AccentAmber
+        else -> AccentRed
+    }
+    val label = when {
+        score >= 80 -> "Good"
+        score >= 50 -> "Fair"
+        else -> "At Risk"
+    }
+
+    val animatedSweep by animateFloatAsState(
+        targetValue = (score / 100f) * 270f,
+        animationSpec = tween(durationMillis = 1200),
+        label = "score_arc"
+    )
+
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = SurfaceDark,
+        tonalElevation = 4.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Arc ring
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(90.dp)) {
+                Canvas(modifier = Modifier.size(90.dp)) {
+                    val stroke = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round)
+                    val inset = 5.dp.toPx()
+                    val arcSize = Size(size.width - inset * 2, size.height - inset * 2)
+                    val topLeft = Offset(inset, inset)
+                    // Background track
+                    drawArc(
+                        color = Color.White.copy(alpha = 0.08f),
+                        startAngle = 135f,
+                        sweepAngle = 270f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = stroke
+                    )
+                    // Score arc
+                    drawArc(
+                        brush = Brush.sweepGradient(
+                            colors = listOf(scoreColor.copy(0.6f), scoreColor),
+                            center = Offset(size.width / 2f, size.height / 2f)
+                        ),
+                        startAngle = 135f,
+                        sweepAngle = animatedSweep,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = stroke
+                    )
+                }
+                Text(
+                    text = "$score",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = scoreColor
+                )
+            }
+
+            Spacer(Modifier.width(20.dp))
+
+            Column {
+                Text("Privacy Score", fontSize = 13.sp, color = TextMuted)
+                Spacer(Modifier.height(4.dp))
+                Text(label, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = scoreColor)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    when {
+                        score >= 80 -> "Your device appears safe."
+                        score >= 50 -> "Some threats detected — review."
+                        else -> "Immediate attention required!"
+                    },
+                    fontSize = 12.sp,
+                    color = TextSecondary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun IncidentChip(incident: LiveIncident) {
     val (icon, color) = when (incident.type) {
         "Mic" -> Icons.Filled.Mic to AccentCyan
         "Camera" -> Icons.Filled.CameraAlt to AccentAmber
-        else -> Icons.Filled.LocationOn to AccentCyan // Location
+        "Location" -> Icons.Filled.LocationOn to AccentGreen
+        else -> Icons.Filled.Warning to AccentRed
     }
-
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(color.copy(0.12f), androidx.compose.foundation.shape.CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(incident.appName, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                val fmt = SimpleDateFormat("h:mm a, MMM d", Locale.getDefault())
-                Text("Used ${incident.type} at ${fmt.format(Date(incident.timestamp))}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-            }
-        }
-    }
-}
-
-@Composable
-fun SensorGridBlock(
-    state: DashboardUiState,
-    onNavigateMic: () -> Unit,
-    onNavigateCamera: () -> Unit,
-    onNavigateLocation: () -> Unit
-) {
-    val totalUsage = state.micAppsToday + state.cameraAppsToday + state.locationAppsToday
-    
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Total Sensor Usage", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                Text(totalUsage.toString(), color = AccentAmber, fontWeight = FontWeight.Bold, fontSize = 24.sp)
-            }
-            Spacer(Modifier.height(16.dp))
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                SensorSquare(
-                    icon = Icons.Filled.CameraAlt,
-                    label = "Camera\nUsage",
-                    value = state.cameraAppsToday.toString(),
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateCamera
-                )
-                SensorSquare(
-                    icon = Icons.Filled.Mic,
-                    label = "Mic\nUsage",
-                    value = state.micAppsToday.toString(),
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateMic
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                SensorSquare(
-                    icon = Icons.Filled.LocationOn,
-                    label = "Location\nUsage",
-                    value = state.locationAppsToday.toString(),
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateLocation
-                )
-                Spacer(modifier = Modifier.weight(1f))
-            }
-            
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = { /* Placeholder for block feature */ },
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight, contentColor = TextPrimary),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-            ) {
-                Text("Blocking Options", fontWeight = FontWeight.SemiBold)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SensorSquare(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, onClick: () -> Unit, modifier: Modifier) {
+    val fmt = SimpleDateFormat("h:mm a", Locale.getDefault())
     Surface(
-        onClick = onClick,
-        modifier = modifier.height(100.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-        color = SurfaceLight
+        shape = RoundedCornerShape(12.dp),
+        color = color.copy(alpha = 0.08f),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(8.dp)
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(label, color = TextPrimary, fontSize = 12.sp, lineHeight = 14.sp)
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(value, color = AccentAmber, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(incident.appName, color = TextPrimary, fontSize = 13.sp, modifier = Modifier.weight(1f))
+            Text(fmt.format(Date(incident.timestamp)), color = TextMuted, fontSize = 11.sp)
         }
     }
 }

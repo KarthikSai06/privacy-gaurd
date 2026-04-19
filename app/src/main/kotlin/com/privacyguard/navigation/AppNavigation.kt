@@ -4,26 +4,30 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.privacyguard.ui.screens.aiinsights.AiInsightsScreen
+import com.privacyguard.ui.screens.camera.CameraUsageScreen
 import com.privacyguard.ui.screens.dashboard.DashboardScreen
 import com.privacyguard.ui.screens.keylogger.KeyloggerScreen
-import com.privacyguard.ui.screens.micusage.MicUsageScreen
-import com.privacyguard.ui.screens.camera.CameraUsageScreen
 import com.privacyguard.ui.screens.location.LocationUsageScreen
+import com.privacyguard.ui.screens.micusage.MicUsageScreen
 import com.privacyguard.ui.screens.nightactivity.NightActivityScreen
 import com.privacyguard.ui.screens.onboarding.OnboardingScreen
+import com.privacyguard.ui.screens.report.ReportScreen
 import com.privacyguard.ui.screens.settings.SettingsScreen
 import com.privacyguard.ui.screens.triggermap.TriggerMapScreen
 
 sealed class Screen(val route: String) {
-    object Onboarding : Screen("onboarding")
-    object Dashboard : Screen("dashboard")
-    object MicUsage : Screen("mic_usage")
-    object CameraUsage: Screen("camera_usage")
+    object Onboarding   : Screen("onboarding")
+    object Dashboard    : Screen("dashboard")
+    object MicUsage     : Screen("mic_usage")
+    object CameraUsage  : Screen("camera_usage")
     object LocationUsage: Screen("location_usage")
-    object Keylogger : Screen("keylogger")
-    object NightActivity : Screen("night_activity")
-    object TriggerMap : Screen("trigger_map")
-    object Settings : Screen("settings")
+    object Keylogger    : Screen("keylogger")
+    object NightActivity: Screen("night_activity")
+    object TriggerMap   : Screen("trigger_map")
+    object Settings     : Screen("settings")
+    object Report       : Screen("report")
+    object AiInsights   : Screen("ai_insights")
 }
 
 @Composable
@@ -43,13 +47,15 @@ fun AppNavigation() {
         }
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onNavigateMic = { navController.navigate(Screen.MicUsage.route) },
-                onNavigateCamera = { navController.navigate(Screen.CameraUsage.route) },
+                onNavigateMic      = { navController.navigate(Screen.MicUsage.route) },
+                onNavigateCamera   = { navController.navigate(Screen.CameraUsage.route) },
                 onNavigateLocation = { navController.navigate(Screen.LocationUsage.route) },
                 onNavigateKeylogger = { navController.navigate(Screen.Keylogger.route) },
-                onNavigateNight = { navController.navigate(Screen.NightActivity.route) },
-                onNavigateTrigger = { navController.navigate(Screen.TriggerMap.route) },
-                onNavigateSettings = { navController.navigate(Screen.Settings.route) }
+                onNavigateNight    = { navController.navigate(Screen.NightActivity.route) },
+                onNavigateTrigger  = { navController.navigate(Screen.TriggerMap.route) },
+                onNavigateSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateReport   = { navController.navigate(Screen.Report.route) },
+                onNavigateAi       = { navController.navigate(Screen.AiInsights.route) }
             )
         }
         composable(Screen.MicUsage.route) {
@@ -72,6 +78,12 @@ fun AppNavigation() {
         }
         composable(Screen.Settings.route) {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Report.route) {
+            ReportScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.AiInsights.route) {
+            AiInsightsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

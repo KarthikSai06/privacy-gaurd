@@ -1,6 +1,5 @@
 package com.privacyguard.ui.screens.location
 
-import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,8 +20,6 @@ import com.privacyguard.ui.components.*
 import com.privacyguard.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
-
 @Composable
 fun LocationUsageScreen(
     onBack: () -> Unit,
