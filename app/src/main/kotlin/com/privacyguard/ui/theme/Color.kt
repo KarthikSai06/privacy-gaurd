@@ -14,6 +14,7 @@ val AccentAmber = Color(0xFFFFAB00)
 val SurfaceDark = Color(0xFF111827)
 val SurfaceCard = Color(0xFF1F2937)
 val SurfaceElevated = Color(0xFF263041)
+val SurfaceLight = Color(0xFF374151)
 
 // Text
 val TextPrimary = Color(0xFFE2E8F0)
