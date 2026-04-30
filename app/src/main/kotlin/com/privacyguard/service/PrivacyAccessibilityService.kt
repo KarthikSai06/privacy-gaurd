@@ -21,6 +21,8 @@ class PrivacyAccessibilityService : AccessibilityService() {
 
     // packageName -> list of event timestamps within the debounce window
     private val textChangeCounters = HashMap<String, MutableList<Long>>()
+    private val dlpAnalyzer = com.privacyguard.service.ScreenContentAnalyzer()
+    private var lastDlpAlertTime = 0L
 
     override fun onServiceConnected() {
         serviceInfo = serviceInfo.apply {
@@ -46,26 +48,31 @@ class PrivacyAccessibilityService : AccessibilityService() {
             }
 
             AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
-                // Track text change events per package for keylogger detection
                 val now = System.currentTimeMillis()
+                
+                // --- 1. Keylogger Detection ---
                 val timestamps = textChangeCounters.getOrPut(pkg) { mutableListOf() }
-
-                // Remove events outside the debounce window
                 timestamps.removeAll { now - it > DEBOUNCE_WINDOW_MS }
-
-                // Add current event
                 timestamps.add(now)
 
-                // Check threshold
                 if (timestamps.size >= TEXT_CHANGE_THRESHOLD) {
                     Log.w(TAG, "Potential keylogger detected: $pkg (${timestamps.size} text changes in 60s)")
-                    // Clear counter to avoid spamming
                     timestamps.clear()
+                    com.privacyguard.utils.NotificationHelper.notifyKeylogger(applicationContext, pkg)
+                }
 
-                    // Notify user
-                    com.privacyguard.utils.NotificationHelper.notifyKeylogger(
-                        applicationContext, pkg
-                    )
+                // --- 2. Screen Content DLP ---
+                if (now - lastDlpAlertTime > DEBOUNCE_WINDOW_MS) {
+                    val textOnScreen = evt.text.joinToString(" ")
+                    if (textOnScreen.isNotBlank()) {
+                        val matches = dlpAnalyzer.analyze(textOnScreen)
+                        if (matches.isNotEmpty()) {
+                            val typesFound = matches.map { it.type }.distinct().joinToString(", ")
+                            Log.w(TAG, "Sensitive data exposed: $typesFound")
+                            com.privacyguard.utils.NotificationHelper.notifyDlpAlert(applicationContext, pkg, typesFound)
+                            lastDlpAlertTime = now
+                        }
+                    }
                 }
             }
         }

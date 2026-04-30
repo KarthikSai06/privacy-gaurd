@@ -169,6 +169,20 @@ fun AiAppCard(app: AppFeatures) {
                 if (app.isKeylogger)        FeatureChip("⌨️ KL", AccentRed)
                 if (app.triggerCount > 0)   FeatureChip("🔗 ${app.triggerCount}", AccentCyan)
             }
+
+            if (app.explanations.isNotEmpty() && pct >= 40) {
+                Spacer(Modifier.height(12.dp))
+                Text("WHY WAS THIS FLAGGED?", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(6.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    app.explanations.take(3).forEach { exp ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("• ${exp.featureName}", color = TextSecondary, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                            Text("${exp.percentage}%", color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
     }
 }

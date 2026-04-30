@@ -19,7 +19,8 @@ data class AppFeatures(
     val nightCount: Int,
     val isKeylogger: Boolean,
     val triggerCount: Int,
-    val anomalyScore: Float
+    val anomalyScore: Float,
+    val explanations: List<ExplainableAI.FeatureImportance> = emptyList()
 )
 
 @Singleton
@@ -98,6 +99,10 @@ class FeatureExtractor @Inject constructor(
                 if (kl) 1f else 0f
             )
 
+            val score = detector.score(features)
+            val xai = ExplainableAI(detector)
+            val explanations = xai.explain(features)
+
             AppFeatures(
                 packageName  = pkg,
                 appName      = appName,
@@ -107,7 +112,8 @@ class FeatureExtractor @Inject constructor(
                 nightCount   = night,
                 isKeylogger  = kl,
                 triggerCount = trig,
-                anomalyScore = detector.score(features)
+                anomalyScore = score,
+                explanations = explanations
             )
         }.sortedByDescending { it.anomalyScore }
     }

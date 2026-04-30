@@ -80,6 +80,16 @@ object NotificationHelper {
         )
     }
 
+    // ── Screen DLP ─────────────────────────────────────────────────────────
+    fun notifyDlpAlert(context: Context, appName: String, dataType: String) {
+        send(
+            context,
+            ID_KEYLOGGER + 1, // Unique enough
+            "🛡️ Sensitive Data Exposed",
+            "$dataType detected on screen while $appName is active. Beware of shoulder surfing!"
+        )
+    }
+
     // ── Internal sender ────────────────────────────────────────────────────
     private fun send(context: Context, notifId: Int, title: String, message: String) {
         createNotificationChannel(context)
