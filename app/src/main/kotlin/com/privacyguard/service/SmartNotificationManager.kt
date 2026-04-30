@@ -10,12 +10,14 @@ import com.privacyguard.R
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import dagger.hilt.android.qualifiers.ApplicationContext
+
 /**
  * Smart Notification Manager — Proactive privacy alerts with priority channels.
  */
 @Singleton
 class SmartNotificationManager @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     companion object {
         const val CHANNEL_CRITICAL = "privacy_critical"
