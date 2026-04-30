@@ -1,33 +1,45 @@
 package com.privacyguard.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.privacyguard.ui.screens.aiinsights.AiInsightsScreen
+import com.privacyguard.ui.screens.appdetail.AppDetailScreen
 import com.privacyguard.ui.screens.camera.CameraUsageScreen
 import com.privacyguard.ui.screens.dashboard.DashboardScreen
 import com.privacyguard.ui.screens.keylogger.KeyloggerScreen
 import com.privacyguard.ui.screens.location.LocationUsageScreen
 import com.privacyguard.ui.screens.micusage.MicUsageScreen
+import com.privacyguard.ui.screens.network.NetworkMonitorScreen
 import com.privacyguard.ui.screens.nightactivity.NightActivityScreen
 import com.privacyguard.ui.screens.onboarding.OnboardingScreen
+import com.privacyguard.ui.screens.permissions.PermissionManagerScreen
 import com.privacyguard.ui.screens.report.ReportScreen
 import com.privacyguard.ui.screens.settings.SettingsScreen
+import com.privacyguard.ui.screens.timeline.TimelineScreen
 import com.privacyguard.ui.screens.triggermap.TriggerMapScreen
 
 sealed class Screen(val route: String) {
-    object Onboarding   : Screen("onboarding")
-    object Dashboard    : Screen("dashboard")
-    object MicUsage     : Screen("mic_usage")
-    object CameraUsage  : Screen("camera_usage")
-    object LocationUsage: Screen("location_usage")
-    object Keylogger    : Screen("keylogger")
-    object NightActivity: Screen("night_activity")
-    object TriggerMap   : Screen("trigger_map")
-    object Settings     : Screen("settings")
-    object Report       : Screen("report")
-    object AiInsights   : Screen("ai_insights")
+    object Onboarding    : Screen("onboarding")
+    object Dashboard     : Screen("dashboard")
+    object MicUsage      : Screen("mic_usage")
+    object CameraUsage   : Screen("camera_usage")
+    object LocationUsage : Screen("location_usage")
+    object Keylogger     : Screen("keylogger")
+    object NightActivity : Screen("night_activity")
+    object TriggerMap    : Screen("trigger_map")
+    object Settings      : Screen("settings")
+    object Report        : Screen("report")
+    object AiInsights    : Screen("ai_insights")
+    object NetworkMonitor: Screen("network_monitor")
+    object Permissions   : Screen("permissions")
+    object Timeline      : Screen("timeline")
+    object AppDetail     : Screen("app_detail/{packageName}") {
+        fun createRoute(packageName: String) = "app_detail/$packageName"
+    }
 }
 
 @Composable
@@ -47,15 +59,18 @@ fun AppNavigation() {
         }
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onNavigateMic      = { navController.navigate(Screen.MicUsage.route) },
-                onNavigateCamera   = { navController.navigate(Screen.CameraUsage.route) },
-                onNavigateLocation = { navController.navigate(Screen.LocationUsage.route) },
+                onNavigateMic       = { navController.navigate(Screen.MicUsage.route) },
+                onNavigateCamera    = { navController.navigate(Screen.CameraUsage.route) },
+                onNavigateLocation  = { navController.navigate(Screen.LocationUsage.route) },
                 onNavigateKeylogger = { navController.navigate(Screen.Keylogger.route) },
-                onNavigateNight    = { navController.navigate(Screen.NightActivity.route) },
-                onNavigateTrigger  = { navController.navigate(Screen.TriggerMap.route) },
-                onNavigateSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateReport   = { navController.navigate(Screen.Report.route) },
-                onNavigateAi       = { navController.navigate(Screen.AiInsights.route) }
+                onNavigateNight     = { navController.navigate(Screen.NightActivity.route) },
+                onNavigateTrigger   = { navController.navigate(Screen.TriggerMap.route) },
+                onNavigateSettings  = { navController.navigate(Screen.Settings.route) },
+                onNavigateReport    = { navController.navigate(Screen.Report.route) },
+                onNavigateAi        = { navController.navigate(Screen.AiInsights.route) },
+                onNavigateNetwork   = { navController.navigate(Screen.NetworkMonitor.route) },
+                onNavigatePermissions = { navController.navigate(Screen.Permissions.route) },
+                onNavigateTimeline  = { navController.navigate(Screen.Timeline.route) }
             )
         }
         composable(Screen.MicUsage.route) {
@@ -84,6 +99,21 @@ fun AppNavigation() {
         }
         composable(Screen.AiInsights.route) {
             AiInsightsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.NetworkMonitor.route) {
+            NetworkMonitorScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Permissions.route) {
+            PermissionManagerScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Timeline.route) {
+            TimelineScreen(onBack = { navController.popBackStack() })
+        }
+        composable(
+            Screen.AppDetail.route,
+            arguments = listOf(navArgument("packageName") { type = NavType.StringType })
+        ) {
+            AppDetailScreen(onBack = { navController.popBackStack() })
         }
     }
 }

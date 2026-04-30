@@ -40,6 +40,9 @@ fun DashboardScreen(
     onNavigateSettings: () -> Unit,
     onNavigateReport: () -> Unit = {},
     onNavigateAi: () -> Unit = {},
+    onNavigateNetwork: () -> Unit = {},
+    onNavigatePermissions: () -> Unit = {},
+    onNavigateTimeline: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -96,7 +99,7 @@ fun DashboardScreen(
                 }
 
                 // ── Privacy Score Ring ──────────────────────────────────────
-                PrivacyScoreCard(score = state.privacyScore)
+                PrivacyScoreCard(score = state.privacyScore, label = state.privacyLabel)
                 Spacer(Modifier.height(20.dp))
 
                 // Recent incidents strip
@@ -160,6 +163,14 @@ fun DashboardScreen(
                     accentColor = AccentCyan,
                     onClick = onNavigateTrigger
                 )
+                Spacer(Modifier.height(10.dp))
+                StatCard(
+                    icon = Icons.Filled.Security,
+                    label = "Tracker domains contacted today",
+                    value = state.trackerCount.toString(),
+                    accentColor = if (state.trackerCount > 0) AccentRed else AccentGreen,
+                    onClick = onNavigateNetwork
+                )
 
                 Spacer(Modifier.height(24.dp))
                 SectionHeader("QUICK ACTIONS")
@@ -177,13 +188,13 @@ fun DashboardScreen(
                         Text("Scan Now", fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(
-                        onClick = onNavigateSettings,
+                        onClick = onNavigateTimeline,
                         modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentCyan)
                     ) {
-                        Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.ViewTimeline, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Settings")
+                        Text("Timeline")
                     }
                 }
 
@@ -209,6 +220,28 @@ fun DashboardScreen(
                     }
                 }
 
+                Spacer(Modifier.height(10.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = onNavigatePermissions,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentAmber)
+                    ) {
+                        Icon(Icons.Filled.AdminPanelSettings, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Permissions")
+                    }
+                    OutlinedButton(
+                        onClick = onNavigateNetwork,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentGreen)
+                    ) {
+                        Icon(Icons.Filled.Dns, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Network")
+                    }
+                }
+
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -216,16 +249,18 @@ fun DashboardScreen(
 }
 
 @Composable
-fun PrivacyScoreCard(score: Int) {
+fun PrivacyScoreCard(score: Int, label: String = "") {
     val scoreColor = when {
         score >= 80 -> AccentGreen
         score >= 50 -> AccentAmber
         else -> AccentRed
     }
-    val label = when {
-        score >= 80 -> "Good"
-        score >= 50 -> "Fair"
-        else -> "At Risk"
+    val displayLabel = label.ifBlank {
+        when {
+            score >= 80 -> "Good"
+            score >= 50 -> "Fair"
+            else -> "At Risk"
+        }
     }
 
     val animatedSweep by animateFloatAsState(
@@ -288,7 +323,7 @@ fun PrivacyScoreCard(score: Int) {
             Column {
                 Text("Privacy Score", fontSize = 13.sp, color = TextMuted)
                 Spacer(Modifier.height(4.dp))
-                Text(label, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = scoreColor)
+                Text(displayLabel, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = scoreColor)
                 Spacer(Modifier.height(6.dp))
                 Text(
                     when {

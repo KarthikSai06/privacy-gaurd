@@ -29,21 +29,46 @@ class PrivacyScanWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
+            // Core scans
             micUsageRepository.scanAndStore()
             cameraUsageRepository.scanAndStore()
             locationUsageRepository.scanAndStore()
             accessibilityRepository.scanAndStore()
             nightActivityRepository.scanAndStore()
             triggerPairRepository.scanAndStore()
-            
-            // Basic anomaly alert check (example threshold)
-            val recentNightActivity = nightActivityRepository.getFrom(System.currentTimeMillis() - 24 * 60 * 60 * 1000).firstOrNull()
+
+            // ── Notification triggers ──────────────────────────────────
+            val last24h = System.currentTimeMillis() - 24 * 60 * 60 * 1000
+
+            // Camera abuse alerts
+            val cameraApps = cameraUsageRepository.getUsageSince(last24h).firstOrNull()
+            cameraApps?.forEach { cam ->
+                if (cam.durationMs > 5 * 60 * 1000L) {
+                    NotificationHelper.notifyCameraAbuse(context, cam.appName)
+                }
+            }
+
+            // Location abuse alerts
+            val locationApps = locationUsageRepository.getUsageSince(last24h).firstOrNull()
+            locationApps?.forEach { loc ->
+                if (loc.durationMs > 10 * 60 * 1000L) {
+                    NotificationHelper.notifyLocationAbuse(context, loc.appName)
+                }
+            }
+
+            // Night anomaly alert
+            val recentNightActivity = nightActivityRepository.getFrom(last24h).firstOrNull()
             if (!recentNightActivity.isNullOrEmpty()) {
-                NotificationHelper.notifySuspiciousActivity(
-                    context,
-                    "Privacy Alert",
-                    "Detected ${recentNightActivity.size} background events last night."
-                )
+                NotificationHelper.notifyNightAnomaly(context, recentNightActivity.size)
+            }
+
+            // Keylogger alert
+            val suspiciousCount = accessibilityRepository.countSuspicious().firstOrNull() ?: 0
+            if (suspiciousCount > 0) {
+                val allRecords = accessibilityRepository.getAll().firstOrNull() ?: emptyList()
+                allRecords.filter { it.isSuspicious }.forEach { rec ->
+                    NotificationHelper.notifyKeylogger(context, rec.appName)
+                }
             }
 
             Result.success()
@@ -58,6 +83,7 @@ class PrivacyScanWorker @AssistedInject constructor(
         fun enqueue(context: Context) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                .setRequiresBatteryNotLow(true)
                 .build()
 
             val request = PeriodicWorkRequestBuilder<PrivacyScanWorker>(15, TimeUnit.MINUTES)

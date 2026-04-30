@@ -28,6 +28,7 @@ fun SettingsScreen(
     var nightStart by remember(settings.nightStartHour) { mutableIntStateOf(settings.nightStartHour) }
     var nightEnd by remember(settings.nightEndHour) { mutableIntStateOf(settings.nightEndHour) }
     var micThreshold by remember(settings.micAlertThresholdMinutes) { mutableIntStateOf(settings.micAlertThresholdMinutes) }
+    var showClearDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -113,6 +114,77 @@ fun SettingsScreen(
                 }
             }
 
+            // ── DATA MANAGEMENT ────────────────────────────────────────
+            item {
+                SectionHeader("DATA MANAGEMENT")
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    // Export button
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.FileDownload, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Export Data (CSV)", fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                            Text("Download all privacy logs as a ZIP", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Button(
+                        onClick = { viewModel.exportData() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !settings.isExporting,
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = PrimaryDark)
+                    ) {
+                        if (settings.isExporting) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = PrimaryDark)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Exporting…", fontWeight = FontWeight.Bold)
+                        } else {
+                            Icon(Icons.Filled.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Export Data", fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    if (settings.exportSuccess) {
+                        Spacer(Modifier.height(6.dp))
+                        Text("✅ Export shared successfully!", color = AccentGreen, fontSize = 12.sp)
+                    }
+                    if (settings.exportError != null) {
+                        Spacer(Modifier.height(6.dp))
+                        Text("❌ ${settings.exportError}", color = AccentRed, fontSize = 12.sp)
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                    HorizontalDivider(color = SurfaceElevated, thickness = 1.dp)
+                    Spacer(Modifier.height(16.dp))
+
+                    // Clear data button
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.DeleteForever, contentDescription = null, tint = AccentRed, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Clear All Data", fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                            Text("Permanently delete all recorded privacy logs", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { showClearDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentRed)
+                    ) {
+                        Icon(Icons.Filled.DeleteForever, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Clear All Data", fontWeight = FontWeight.Bold)
+                    }
+
+                    if (settings.clearSuccess) {
+                        Spacer(Modifier.height(6.dp))
+                        Text("✅ All data cleared.", color = AccentGreen, fontSize = 12.sp)
+                    }
+                }
+            }
+
             // Trusted apps whitelist
             item {
                 SectionHeader("TRUSTED APP WHITELIST")
@@ -152,8 +224,8 @@ fun SettingsScreen(
             item {
                 SectionHeader("ABOUT")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Text("PrivacyGuard v1.0", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("All data stored locally. No internet access required.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    Text("PrivacyGuard v2.0", fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("All data stored locally. Network monitor uses local-only VPN.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                     Spacer(Modifier.height(4.dp))
                     Text("Supports Android 8.0 (API 26)+", style = MaterialTheme.typography.bodySmall, color = TextMuted)
                 }
@@ -195,6 +267,28 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showAddTrusted = false; newTrustedPkg = "" }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    // Clear data confirmation dialog
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            containerColor = SurfaceCard,
+            icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = AccentRed) },
+            title = { Text("Clear All Data?", color = TextPrimary) },
+            text = { Text("This will permanently delete all recorded privacy logs, events, and scan history. This action cannot be undone.", color = TextSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearAllData()
+                    showClearDialog = false
+                }) { Text("Clear", color = AccentRed) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
                     Text("Cancel", color = TextSecondary)
                 }
             }

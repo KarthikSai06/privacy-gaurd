@@ -7,7 +7,9 @@ import com.privacyguard.data.db.dao.AccessibilityDao
 import com.privacyguard.data.db.dao.CameraUsageDao
 import com.privacyguard.data.db.dao.LocationUsageDao
 import com.privacyguard.data.db.dao.MicUsageDao
+import com.privacyguard.data.db.dao.NetworkEventDao
 import com.privacyguard.data.db.dao.NightActivityDao
+import com.privacyguard.data.db.dao.PrivacyEventDao
 import com.privacyguard.data.db.dao.TriggerPairDao
 import dagger.Module
 import dagger.Provides
@@ -44,4 +46,10 @@ object DatabaseModule {
 
     @Provides
     fun provideTriggerPairDao(db: AppDatabase): TriggerPairDao = db.triggerPairDao()
+
+    @Provides
+    fun providePrivacyEventDao(db: AppDatabase): PrivacyEventDao = db.privacyEventDao()
+
+    @Provides
+    fun provideNetworkEventDao(db: AppDatabase): NetworkEventDao = db.networkEventDao()
 }

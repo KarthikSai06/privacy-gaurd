@@ -6,13 +6,17 @@ import com.privacyguard.data.db.dao.AccessibilityDao
 import com.privacyguard.data.db.dao.CameraUsageDao
 import com.privacyguard.data.db.dao.LocationUsageDao
 import com.privacyguard.data.db.dao.MicUsageDao
+import com.privacyguard.data.db.dao.NetworkEventDao
 import com.privacyguard.data.db.dao.NightActivityDao
+import com.privacyguard.data.db.dao.PrivacyEventDao
 import com.privacyguard.data.db.dao.TriggerPairDao
 import com.privacyguard.data.db.entities.AccessibilityRecord
 import com.privacyguard.data.db.entities.AppCameraUsage
 import com.privacyguard.data.db.entities.AppLocationUsage
 import com.privacyguard.data.db.entities.AppMicUsage
+import com.privacyguard.data.db.entities.NetworkEvent
 import com.privacyguard.data.db.entities.NightActivity
+import com.privacyguard.data.db.entities.PrivacyEvent
 import com.privacyguard.data.db.entities.TriggerPair
 
 @Database(
@@ -22,9 +26,11 @@ import com.privacyguard.data.db.entities.TriggerPair
         AppLocationUsage::class,
         AccessibilityRecord::class,
         NightActivity::class,
-        TriggerPair::class
+        TriggerPair::class,
+        PrivacyEvent::class,
+        NetworkEvent::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +40,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun accessibilityDao(): AccessibilityDao
     abstract fun nightActivityDao(): NightActivityDao
     abstract fun triggerPairDao(): TriggerPairDao
+    abstract fun privacyEventDao(): PrivacyEventDao
+    abstract fun networkEventDao(): NetworkEventDao
 
     companion object {
         const val DATABASE_NAME = "privacy_guard_db"

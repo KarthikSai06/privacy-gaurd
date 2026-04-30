@@ -6,8 +6,10 @@ import com.privacyguard.data.repository.AccessibilityRepository
 import com.privacyguard.data.repository.CameraUsageRepository
 import com.privacyguard.data.repository.LocationUsageRepository
 import com.privacyguard.data.repository.MicUsageRepository
+import com.privacyguard.data.repository.NetworkRepository
 import com.privacyguard.data.repository.NightActivityRepository
 import com.privacyguard.data.repository.TriggerPairRepository
+import com.privacyguard.domain.PrivacyScoreCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,7 +30,9 @@ data class DashboardUiState(
     val suspiciousApps: Int = 0,
     val nightEvents: Int = 0,
     val triggerPairs: Int = 0,
+    val trackerCount: Int = 0,
     val privacyScore: Int = 100,
+    val privacyLabel: String = "Good",
     val recentIncidents: List<LiveIncident> = emptyList(),
     val lastScanTime: Long = 0L,
     val isRefreshing: Boolean = false
@@ -41,7 +45,8 @@ class DashboardViewModel @Inject constructor(
     private val locationRepo: LocationUsageRepository,
     private val accessibilityRepo: AccessibilityRepository,
     private val nightRepo: NightActivityRepository,
-    private val triggerRepo: TriggerPairRepository
+    private val triggerRepo: TriggerPairRepository,
+    private val networkRepo: NetworkRepository
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -67,6 +72,7 @@ class DashboardViewModel @Inject constructor(
         accessibilityRepo.countSuspicious(),
         nightRepo.countThisWeek(),
         triggerRepo.count(),
+        networkRepo.countTodayTrackers(),
         recentIncidentsFlow,
         _isRefreshing,
         _lastScanTime
@@ -77,14 +83,14 @@ class DashboardViewModel @Inject constructor(
         val acc = flows[3] as Int
         val night = flows[4] as Int
         val trig = flows[5] as Int
+        val trackers = flows[6] as Int
         @Suppress("UNCHECKED_CAST")
-        val incidents = flows[6] as List<LiveIncident>
-        val refreshing = flows[7] as Boolean
-        val scanTime = flows[8] as Long
+        val incidents = flows[7] as List<LiveIncident>
+        val refreshing = flows[8] as Boolean
+        val scanTime = flows[9] as Long
         
-        // Equal baseline penalty weights logic as discussed
-        val penalty = (acc * 20) + (night * 5) + (cam * 5) + (loc * 5) + (mic * 5)
-        val score = maxOf(0, 100 - penalty)
+        // Use the consistent PrivacyScoreCalculator
+        val breakdown = PrivacyScoreCalculator.calculate(acc, night, cam, loc, mic, trig)
         
         DashboardUiState(
             micAppsToday = mic,
@@ -93,7 +99,9 @@ class DashboardViewModel @Inject constructor(
             suspiciousApps = acc,
             nightEvents = night,
             triggerPairs = trig,
-            privacyScore = score,
+            trackerCount = trackers,
+            privacyScore = breakdown.score,
+            privacyLabel = breakdown.label,
             recentIncidents = incidents,
             lastScanTime = scanTime,
             isRefreshing = refreshing
