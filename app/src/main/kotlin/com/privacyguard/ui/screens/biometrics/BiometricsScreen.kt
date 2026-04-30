@@ -110,6 +110,63 @@ fun BiometricsScreen(
                         }
                     }
                 }
+                
+                // Training Area (Only show if not fully enrolled)
+                if (!state.isEnrolled) {
+                    item {
+                        var trainingText by remember { mutableStateOf("") }
+                        var startTime by remember { mutableStateOf(0L) }
+
+                        Spacer(Modifier.height(16.dp))
+                        SectionHeader("ENROLLMENT TRAINING (${state.ownerProfiles.size}/5)")
+                        Spacer(Modifier.height(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(14.dp), 
+                            color = CardDark,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "Type the following phrase naturally to build your profile:\n\"The quick brown fox jumps over the lazy dog.\"",
+                                    fontSize = 13.sp, color = TextSecondary, modifier = Modifier.padding(bottom = 12.dp)
+                                )
+                                OutlinedTextField(
+                                    value = trainingText,
+                                    onValueChange = { newText ->
+                                        if (trainingText.isEmpty() && newText.isNotEmpty()) {
+                                            startTime = System.currentTimeMillis()
+                                        }
+                                        trainingText = newText
+                                        
+                                        // Auto-submit after ~40 chars
+                                        if (newText.length >= 40 && startTime > 0) {
+                                            val duration = System.currentTimeMillis() - startTime
+                                            viewModel.recordTypingSample(newText.length, duration)
+                                            trainingText = "" // Reset for next sample
+                                            startTime = 0L
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = { Text("Start typing here...", color = TextMuted) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = AccentCyan,
+                                        unfocusedBorderColor = SurfaceElevated,
+                                        focusedTextColor = TextPrimary,
+                                        unfocusedTextColor = TextPrimary
+                                    )
+                                )
+                                val progress = state.ownerProfiles.size / 5f
+                                Spacer(Modifier.height(12.dp))
+                                LinearProgressIndicator(
+                                    progress = progress.coerceIn(0f, 1f),
+                                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                                    color = AccentCyan,
+                                    trackColor = SurfaceElevated
+                                )
+                            }
+                        }
+                    }
+                }
 
                 // How it works
                 item {

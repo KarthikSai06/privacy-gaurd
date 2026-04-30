@@ -50,4 +50,30 @@ class BiometricsViewModel @Inject constructor(
             keystrokeDao.deleteAll()
         }
     }
+
+    /**
+     * Records a typing sample to build the owner's biometric profile.
+     * Since Android blocks raw keystroke timings globally, we estimate
+     * dwell/flight from an in-app typing session.
+     */
+    fun recordTypingSample(charCount: Int, durationMs: Long) {
+        if (charCount < 10) return // Ignore very short samples
+
+        // Estimate metrics based on the session
+        val avgFlightTime = (durationMs.toFloat() / charCount) * 0.8f // 80% flight
+        val avgDwellTime = (durationMs.toFloat() / charCount) * 0.2f  // 20% dwell
+        val cpm = (charCount.toFloat() / (durationMs / 60000f))
+
+        val profile = KeystrokeProfile(
+            avgDwellTime = avgDwellTime,
+            avgFlightTime = avgFlightTime,
+            typingSpeed = cpm,
+            sessionDuration = durationMs,
+            isOwner = true
+        )
+
+        viewModelScope.launch {
+            keystrokeDao.insert(profile)
+        }
+    }
 }
