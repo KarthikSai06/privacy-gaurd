@@ -21,12 +21,31 @@ import com.privacyguard.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+
 @Composable
 fun IMSICatcherScreen(
     onBack: () -> Unit,
     viewModel: IMSICatcherViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val phoneStateGranted = permissions[Manifest.permission.READ_PHONE_STATE] ?: false
+        
+        if (locationGranted && phoneStateGranted) {
+            viewModel.toggleMonitoring()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -91,7 +110,22 @@ fun IMSICatcherScreen(
                             }
                             Spacer(Modifier.height(16.dp))
                             Button(
-                                onClick = { viewModel.toggleMonitoring() },
+                                onClick = { 
+                                    if (state.isMonitoring) {
+                                        viewModel.toggleMonitoring()
+                                    } else {
+                                        val hasLocation = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                                        val hasPhoneState = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
+                                        if (hasLocation && hasPhoneState) {
+                                            viewModel.toggleMonitoring()
+                                        } else {
+                                            permissionLauncher.launch(arrayOf(
+                                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                                Manifest.permission.READ_PHONE_STATE
+                                            ))
+                                        }
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth().height(48.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (state.isMonitoring) AccentRed else AccentCyan,

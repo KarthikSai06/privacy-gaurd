@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import dagger.hilt.android.qualifiers.ApplicationContext
+
 /**
  * Cell Tower Monitor — IMSI Catcher / Fake Base Station Detection.
  *
@@ -22,7 +24,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class CellTowerMonitor @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val cellTowerDao: CellTowerDao,
     private val notificationManager: SmartNotificationManager
 ) {

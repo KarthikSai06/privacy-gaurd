@@ -23,7 +23,8 @@ data class IMSICatcherUiState(
 @HiltViewModel
 class IMSICatcherViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val cellTowerDao: CellTowerDao
+    private val cellTowerDao: CellTowerDao,
+    private val cellTowerMonitor: CellTowerMonitor
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(IMSICatcherUiState())
@@ -56,7 +57,13 @@ class IMSICatcherViewModel @Inject constructor(
     }
 
     fun toggleMonitoring() {
-        _state.update { it.copy(isMonitoring = !it.isMonitoring) }
-        // In production, this would start/stop CellTowerMonitor
+        val willMonitor = !_state.value.isMonitoring
+        _state.update { it.copy(isMonitoring = willMonitor) }
+        
+        if (willMonitor) {
+            cellTowerMonitor.startMonitoring()
+        } else {
+            cellTowerMonitor.stopMonitoring()
+        }
     }
 }
