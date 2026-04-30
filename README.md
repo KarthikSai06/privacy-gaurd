@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-brightgreen?style=for-the-badge)]()
 
-**PrivacyGuard is a real-time, on-device Android privacy monitoring application that detects microphone abuse, camera & location tracking, keyloggers, suspicious background activity, hidden app co-activation patterns, and network tracker domains — without ever sending your data to the cloud.**
+**PrivacyGuard is a comprehensive, real-time, on-device Android privacy monitoring application with 22+ features including microphone/camera/location abuse detection, keylogger scanning, network traffic analysis, phishing detection, behavioral biometrics, IMSI catcher detection, app behavior clustering, and on-device ML anomaly scoring — all without ever sending your data to the cloud.**
 
 [Features](#-features) • [Problem Statement](#-problem-statement) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Roadmap](#-roadmap)
 
@@ -140,6 +140,75 @@ A robust background scanning engine that works efficiently without draining the 
 - Camera, location, night, and keylogger notification triggers on each scan cycle
 - All data processed and stored 100% locally via **Room Database**
 
+### 🎣 16. Phishing URL & SMS Detector
+On-device phishing detection engine using pattern matching and heuristic scoring.
+- Scans SMS messages, notifications, and clipboard content for phishing indicators
+- Detects suspicious URLs with IP addresses, excessive subdomains, and known phishing TLDs
+- Urgency keyword analysis ("verify", "suspended", "urgent", "expire")
+- Per-message risk score with detailed breakdown
+- Alert history stored in Room for trend analysis
+
+### 🔓 17. Data Breach Monitor
+Check if your email has been compromised in known data breaches.
+- Integrates with Have I Been Pwned (HIBP) API
+- Shows breach name, date, domain, and exposed data categories
+- Color-coded severity indicators
+- Clean/breach result display with detailed breach cards
+
+### 📈 18. Privacy Trends (30-Day History)
+Track your privacy score over time with interactive charts.
+- 30-day privacy score history with daily snapshots
+- Canvas-based line chart with score visualization
+- Average, min, and max score statistics
+- Score improvement/degradation tracking
+
+### 📡 19. IMSI Catcher Detection
+Detects fake cell towers (stingrays/IMSI catchers) through anomaly analysis.
+- Monitors cell tower IDs, LAC codes, and signal strengths
+- Detects rapid tower switching, unusually strong signals, and multiple LAC changes
+- Real-time anomaly count with pattern descriptions
+- Cell tower log history with anomaly highlighting
+
+### 🧬 20. Behavioral Biometrics (Keystroke Dynamics)
+Learns your typing rhythm to detect if someone else is using your device.
+- Builds statistical profiles of key dwell time, flight time, and typing speed
+- Compares each typing session against your baseline
+- Intruder detection alerts when typing pattern deviates
+- Enrollment tracking with confidence scoring
+
+### 🫧 21. App Behavior Clustering (K-Means)
+Groups installed apps into behavioral clusters using on-device ML.
+- K-Means clustering on mic/camera/location/permission feature vectors
+- Identifies Low Risk, Moderate, High Activity, and Suspicious clusters
+- Per-cluster risk score with sorted app listings
+- Fully on-device — no external dependencies
+
+### 🕸️ 22. Intent Graph — Inter-App Communication Mapping
+Maps how apps secretly communicate with each other through Android's Intent system.
+- Parses all installed apps' exported Activities, Services, and Receivers
+- Builds a directed graph of inter-app communication channels
+- Detects suspicious patterns: large attack surfaces, custom permissions, heavy interconnection
+- Severity-rated alerts (LOW, MEDIUM, HIGH)
+- Top-connected apps ranking
+
+### 🛡️ 23. App Install Scanner
+Auto-scans newly installed apps using the ML anomaly model.
+- `BroadcastReceiver` listens for `PACKAGE_ADDED` and `PACKAGE_REPLACED` events
+- Immediately extracts permissions and runs the ML model on the new app
+- Sends critical notification if the app scores above the danger threshold
+
+### 🧠 24. Explainable AI (XAI)
+Permutation feature importance to explain *why* an app is flagged as dangerous.
+- For each of the 13 ML features, measures prediction impact by zeroing it out
+- Reports "Camera: 35%, Night Activity: 25%..." style explanations
+- Enables users and researchers to understand model decisions
+
+### 🔍 25. Screen Content DLP (Data Loss Prevention)
+Detects sensitive data exposure on screen in real-time.
+- Monitors AccessibilityService text events for credit card numbers, OTPs, passwords, SSNs, Aadhaar, and PAN numbers
+- Alerts when sensitive data is detected in clipboard or on-screen text
+- Regex-based pattern matching with category classification
+
 ---
 
 ## 🏗️ Architecture
@@ -151,21 +220,26 @@ PrivacyGuard/
 │
 ├── 📦 data/
 │   ├── db/
-│   │   ├── entities/          # Room Entities (MicUsage, NightActivity, NetworkEvent, etc.)
-│   │   ├── dao/               # Data Access Objects (8 DAOs)
-│   │   └── AppDatabase.kt     # Room Database (v3, 8 entities)
-│   └── repository/            # Repository layer (7 repositories)
+│   │   ├── entities/          # Room Entities (12 tables)
+│   │   ├── dao/               # Data Access Objects (12 DAOs)
+│   │   └── AppDatabase.kt     # Room Database (v4, 12 entities)
+│   └── repository/            # Repository layer (8 repositories)
 │
 ├── 🧠 di/
 │   ├── AppModule.kt           # Hilt DI module for app-level deps
-│   └── DatabaseModule.kt      # Hilt DI module for Room DB (8 DAO providers)
+│   └── DatabaseModule.kt      # Hilt DI module for Room DB (12 DAO providers)
 │
 ├── 🧮 domain/
 │   └── PrivacyScoreCalculator.kt  # Weighted privacy score engine
 │
 ├── 🤖 ml/
-│   ├── AnomalyDetector.kt    # TFLite-ready anomaly detection
-│   └── FeatureExtractor.kt   # Privacy feature aggregation per app
+│   ├── AnomalyDetector.kt     # TFLite anomaly detection (13-feature model)
+│   ├── FeatureExtractor.kt    # Privacy feature aggregation per app
+│   ├── ExplainableAI.kt       # Permutation feature importance (XAI)
+│   ├── PhishingDetector.kt    # On-device phishing URL/SMS scanner
+│   ├── BiometricProfiler.kt   # Keystroke dynamics anomaly detection
+│   ├── AppClusterAnalyzer.kt  # On-device K-Means clustering
+│   └── IntentGraphAnalyzer.kt # Inter-app communication graph builder
 │
 ├── 🔔 receiver/
 │   └── BootReceiver.kt        # Restarts services on device boot
@@ -175,7 +249,11 @@ PrivacyGuard/
 │   ├── NetworkMonitorVpnService.kt     # Local-only VPN DNS inspector
 │   ├── DnsPacketParser.kt              # Raw DNS packet parser
 │   ├── TrackerDomainMatcher.kt         # Tracker domain blocklist matcher
-│   └── ClipboardMonitor.kt             # Clipboard access monitor
+│   ├── ClipboardMonitor.kt             # Clipboard access monitor
+│   ├── SmartNotificationManager.kt     # Multi-channel notification system
+│   ├── AppInstallReceiver.kt           # Auto-scan newly installed apps
+│   ├── CellTowerMonitor.kt             # IMSI catcher detection engine
+│   └── ScreenContentAnalyzer.kt        # Screen DLP (credit cards, OTPs, etc.)
 │
 ├── 🛠️ utils/
 │   ├── NotificationHelper.kt   # Push notification manager
@@ -184,7 +262,7 @@ PrivacyGuard/
 │
 ├── 🖥️ ui/
 │   ├── screens/
-│   │   ├── dashboard/         # Main summary screen
+│   │   ├── dashboard/         # Main summary screen (25+ features)
 │   │   ├── micusage/          # Microphone usage logs & charts
 │   │   ├── camera/            # Camera usage tracking
 │   │   ├── location/          # Location access monitoring
@@ -196,6 +274,13 @@ PrivacyGuard/
 │   │   ├── timeline/          # Unified privacy event timeline
 │   │   ├── appdetail/         # Per-app privacy deep-dive
 │   │   ├── aiinsights/        # AI anomaly analysis
+│   │   ├── phishing/          # Phishing URL/SMS scanner
+│   │   ├── breach/            # Data breach monitor (HIBP)
+│   │   ├── trends/            # 30-day privacy score trends
+│   │   ├── imsicatcher/       # IMSI catcher/stingray detection
+│   │   ├── biometrics/        # Keystroke dynamics biometrics
+│   │   ├── clustering/        # App behavior K-Means clustering
+│   │   ├── intentgraph/       # Inter-app intent communication graph
 │   │   ├── report/            # Weekly PDF report
 │   │   ├── onboarding/        # First-run permissions setup
 │   │   └── settings/          # App settings, export, & whitelist
@@ -203,7 +288,13 @@ PrivacyGuard/
 │   └── theme/                 # Color, Typography, Theme definitions
 │
 ├── 🗺️ navigation/
-│   └── AppNavigation.kt       # Compose Navigation graph (15 routes)
+│   └── AppNavigation.kt       # Compose Navigation graph (22 routes)
+│
+├── 🧪 ml_pipeline/            # Python ML training pipeline
+│   ├── train_model.py         # TensorFlow Keras → TFLite trainer
+│   ├── extract_static.py      # Androguard static feature extraction
+│   ├── run_dynamic.py         # Frida + AVD dynamic analysis
+│   └── merge_datasets.py      # Static + dynamic feature merger
 │
 └── ⚙️ worker/
     └── PrivacyScanWorker.kt   # WorkManager background scan job
@@ -217,11 +308,13 @@ PrivacyGuard/
 | **UI** | Jetpack Compose |
 | **Architecture** | MVVM + Repository Pattern |
 | **DI** | Hilt |
-| **Local DB** | Room (SQLite, 8 entities) |
+| **Local DB** | Room (SQLite, 12 entities) |
 | **Background Work** | WorkManager |
 | **Network Monitor** | VpnService (local-only) |
-| **Charts** | MPAndroidChart |
-| **Privacy APIs** | AppOpsManager, UsageStatsManager, AccessibilityService, VpnService |
+| **On-Device ML** | TensorFlow Lite (13-feature anomaly model) |
+| **Charts** | MPAndroidChart + Canvas-based charts |
+| **Privacy APIs** | AppOpsManager, UsageStatsManager, AccessibilityService, VpnService, TelephonyManager |
+| **ML Pipeline** | Python + Androguard + Frida + TensorFlow |
 | **Min Android** | API 26 (Android 8.0 Oreo) |
 
 ---
@@ -287,12 +380,23 @@ PrivacyGuard/
 - [x] 📅 **Privacy Timeline** — Unified chronological event view
 - [x] 📤 **Data Export (CSV/ZIP)** — Full data export with share sheet
 - [x] 📄 **Weekly PDF Report** — Automated privacy health summary
-- [x] 🤖 **AI Anomaly Insights** — Rule-based anomaly scoring (TFLite-ready)
+- [x] 🤖 **AI Anomaly Insights** — TFLite model + rule-based anomaly scoring
 - [x] 🔍 **App Detail Deep-Dive** — Per-app privacy event consolidation
 - [x] 🔔 **Push Alert System** — Real-time notifications for all threat categories
-- [ ] 🧠 **On-Device ML Model** — Replace heuristic rules with TFLite autoencoder
+- [x] 🧠 **On-Device ML Model** — TFLite 13-feature spyware classifier
+- [x] 🎣 **Phishing Detector** — On-device SMS/URL phishing scanner
+- [x] 🔓 **Data Breach Monitor** — HIBP email breach checker
+- [x] 📈 **Privacy Trends** — 30-day score history with charts
+- [x] 📡 **IMSI Catcher Detection** — Fake base station anomaly detector
+- [x] 🧬 **Behavioral Biometrics** — Keystroke dynamics intruder detection
+- [x] 🫧 **App Behavior Clustering** — On-device K-Means clustering
+- [x] 🕸️ **Intent Graph Analysis** — Inter-app communication mapping
+- [x] 🛡️ **App Install Scanner** — Auto-scan new installations
+- [x] 🧠 **Explainable AI (XAI)** — Permutation feature importance
+- [x] 🔍 **Screen Content DLP** — Sensitive data exposure detection
 - [ ] 📦 **Gradle Modularization** — Split into `:core`, `:feature` modules for scalability
 - [ ] 🧪 **Unit Test Suite** — JUnit5 + MockK tests for domain and data layers
+- [ ] 🔄 **Federated Learning** — Privacy-preserving collaborative model training
 
 ---
 

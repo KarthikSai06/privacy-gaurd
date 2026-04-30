@@ -13,6 +13,7 @@ val AccentAmber = Color(0xFFFFAB00)
 // Surface
 val SurfaceDark = Color(0xFF111827)
 val SurfaceCard = Color(0xFF1F2937)
+val CardDark = SurfaceCard                   // Alias used by advanced feature screens
 val SurfaceElevated = Color(0xFF263041)
 val SurfaceLight = Color(0xFF374151)
 

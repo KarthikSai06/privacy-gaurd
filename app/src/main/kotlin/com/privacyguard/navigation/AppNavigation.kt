@@ -8,8 +8,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.privacyguard.ui.screens.aiinsights.AiInsightsScreen
 import com.privacyguard.ui.screens.appdetail.AppDetailScreen
+import com.privacyguard.ui.screens.biometrics.BiometricsScreen
+import com.privacyguard.ui.screens.breach.BreachScreen
 import com.privacyguard.ui.screens.camera.CameraUsageScreen
+import com.privacyguard.ui.screens.clustering.ClusteringScreen
 import com.privacyguard.ui.screens.dashboard.DashboardScreen
+import com.privacyguard.ui.screens.imsicatcher.IMSICatcherScreen
+import com.privacyguard.ui.screens.intentgraph.IntentGraphScreen
 import com.privacyguard.ui.screens.keylogger.KeyloggerScreen
 import com.privacyguard.ui.screens.location.LocationUsageScreen
 import com.privacyguard.ui.screens.micusage.MicUsageScreen
@@ -17,9 +22,11 @@ import com.privacyguard.ui.screens.network.NetworkMonitorScreen
 import com.privacyguard.ui.screens.nightactivity.NightActivityScreen
 import com.privacyguard.ui.screens.onboarding.OnboardingScreen
 import com.privacyguard.ui.screens.permissions.PermissionManagerScreen
+import com.privacyguard.ui.screens.phishing.PhishingScreen
 import com.privacyguard.ui.screens.report.ReportScreen
 import com.privacyguard.ui.screens.settings.SettingsScreen
 import com.privacyguard.ui.screens.timeline.TimelineScreen
+import com.privacyguard.ui.screens.trends.TrendsScreen
 import com.privacyguard.ui.screens.triggermap.TriggerMapScreen
 
 sealed class Screen(val route: String) {
@@ -37,6 +44,13 @@ sealed class Screen(val route: String) {
     object NetworkMonitor: Screen("network_monitor")
     object Permissions   : Screen("permissions")
     object Timeline      : Screen("timeline")
+    object Phishing      : Screen("phishing")
+    object Trends        : Screen("trends")
+    object Breach        : Screen("breach")
+    object IMSICatcher   : Screen("imsi_catcher")
+    object Clustering    : Screen("clustering")
+    object IntentGraph   : Screen("intent_graph")
+    object Biometrics    : Screen("biometrics")
     object AppDetail     : Screen("app_detail/{packageName}") {
         fun createRoute(packageName: String) = "app_detail/$packageName"
     }
@@ -70,7 +84,14 @@ fun AppNavigation() {
                 onNavigateAi        = { navController.navigate(Screen.AiInsights.route) },
                 onNavigateNetwork   = { navController.navigate(Screen.NetworkMonitor.route) },
                 onNavigatePermissions = { navController.navigate(Screen.Permissions.route) },
-                onNavigateTimeline  = { navController.navigate(Screen.Timeline.route) }
+                onNavigateTimeline  = { navController.navigate(Screen.Timeline.route) },
+                onNavigatePhishing  = { navController.navigate(Screen.Phishing.route) },
+                onNavigateTrends    = { navController.navigate(Screen.Trends.route) },
+                onNavigateBreach    = { navController.navigate(Screen.Breach.route) },
+                onNavigateImsi      = { navController.navigate(Screen.IMSICatcher.route) },
+                onNavigateClustering = { navController.navigate(Screen.Clustering.route) },
+                onNavigateIntentGraph = { navController.navigate(Screen.IntentGraph.route) },
+                onNavigateBiometrics = { navController.navigate(Screen.Biometrics.route) }
             )
         }
         composable(Screen.MicUsage.route) {
@@ -108,6 +129,27 @@ fun AppNavigation() {
         }
         composable(Screen.Timeline.route) {
             TimelineScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Phishing.route) {
+            PhishingScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Trends.route) {
+            TrendsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Breach.route) {
+            BreachScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.IMSICatcher.route) {
+            IMSICatcherScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Clustering.route) {
+            ClusteringScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.IntentGraph.route) {
+            IntentGraphScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Biometrics.route) {
+            BiometricsScreen(onBack = { navController.popBackStack() })
         }
         composable(
             Screen.AppDetail.route,

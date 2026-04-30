@@ -1,0 +1,47 @@
+{
+    "mean": [
+        0.52,
+        0.4675,
+        0.47,
+        24.9925,
+        4.4,
+        9.835,
+        4.3425,
+        4.605,
+        4.285,
+        786966.0675,
+        2.99,
+        1.505,
+        0.6475
+    ],
+    "scale": [
+        0.4995998398718722,
+        0.49894263197285615,
+        0.49909918853871216,
+        13.856675061139303,
+        2.8469281690973527,
+        5.7448041742082,
+        2.8275773641051787,
+        2.8016022201590283,
+        2.897201235675562,
+        390181.87270409305,
+        1.9364658530425969,
+        1.0416213323468357,
+        0.47774862637165233
+    ],
+    "features": [
+        "perm_RECORD_AUDIO",
+        "perm_CAMERA",
+        "perm_ACCESS_FINE_LOCATION",
+        "total_permissions",
+        "receivers_count",
+        "services_count",
+        "audio_record_starts",
+        "camera_opens",
+        "location_requests",
+        "network_bytes_sent",
+        "night_activity_count",
+        "trigger_count",
+        "is_keylogger"
+    ]
+}

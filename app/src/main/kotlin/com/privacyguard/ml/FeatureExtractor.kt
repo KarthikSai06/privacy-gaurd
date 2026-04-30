@@ -1,7 +1,11 @@
 package com.privacyguard.ml
 
-import com.privacyguard.data.db.entities.*
+import android.content.Context
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.net.TrafficStats
 import com.privacyguard.data.repository.*
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,6 +24,7 @@ data class AppFeatures(
 
 @Singleton
 class FeatureExtractor @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val micRepo: MicUsageRepository,
     private val cameraRepo: CameraUsageRepository,
     private val locationRepo: LocationUsageRepository,
@@ -28,6 +33,8 @@ class FeatureExtractor @Inject constructor(
     private val triggerRepo: TriggerPairRepository
 ) {
     suspend fun extractAll(detector: AnomalyDetector): List<AppFeatures> {
+        val pm = context.packageManager
+        
         val micList      = micRepo.getAllUsage().firstOrNull() ?: emptyList()
         val camList      = cameraRepo.getAllUsage().firstOrNull() ?: emptyList()
         val locList      = locationRepo.getAllUsage().firstOrNull() ?: emptyList()
@@ -35,40 +42,60 @@ class FeatureExtractor @Inject constructor(
         val suspicious   = accessibilityRepo.getSuspicious().firstOrNull() ?: emptyList()
         val triggerList  = triggerRepo.getAll().firstOrNull() ?: emptyList()
 
-        // Aggregate per package
+        // Aggregate per package based on active monitoring
         val pkgSet = (micList.map { it.packageName } +
                       camList.map { it.packageName } +
                       locList.map { it.packageName } +
                       suspicious.map { it.packageName }).toSet()
 
-        // Max values for normalization
-        val maxMic   = micList.size.coerceAtLeast(1).toFloat()
-        val maxCam   = camList.size.coerceAtLeast(1).toFloat()
-        val maxLoc   = locList.size.coerceAtLeast(1).toFloat()
-        val maxNight = nightList.size.coerceAtLeast(1).toFloat()
-        val maxTrig  = triggerList.size.coerceAtLeast(1).toFloat()
+        return pkgSet.mapNotNull { pkg ->
+            var packageInfo: PackageInfo? = null
+            try {
+                packageInfo = pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS or PackageManager.GET_RECEIVERS or PackageManager.GET_SERVICES)
+            } catch (e: PackageManager.NameNotFoundException) {
+                // App uninstalled
+            }
 
-        return pkgSet.map { pkg ->
+            if (packageInfo == null) return@mapNotNull null
+
+            // 1. Static features from PackageManager
+            val requestedPerms = packageInfo.requestedPermissions?.toList() ?: emptyList()
+            val permAudio = if (requestedPerms.contains("android.permission.RECORD_AUDIO")) 1f else 0f
+            val permCamera = if (requestedPerms.contains("android.permission.CAMERA")) 1f else 0f
+            val permLocation = if (requestedPerms.contains("android.permission.ACCESS_FINE_LOCATION")) 1f else 0f
+            val totalPerms = requestedPerms.size.toFloat()
+            val receiversCount = packageInfo.receivers?.size?.toFloat() ?: 0f
+            val servicesCount = packageInfo.services?.size?.toFloat() ?: 0f
+
+            // 2. Dynamic features from DAOs
             val mic    = micList.count { it.packageName == pkg }
             val cam    = camList.count { it.packageName == pkg }
             val loc    = locList.count { it.packageName == pkg }
             val night  = nightList.count { it.packageName == pkg }
             val kl     = suspicious.any { it.packageName == pkg }
             val trig   = triggerList.count { it.appA == pkg || it.appB == pkg }
+            
+            // Network bytes via TrafficStats
+            val uid = packageInfo.applicationInfo.uid
+            val networkBytes = TrafficStats.getUidTxBytes(uid).let { if (it > 0) it.toFloat() else 0f }
 
-            val appName = (micList.find { it.packageName == pkg }?.appName
-                ?: camList.find { it.packageName == pkg }?.appName
-                ?: locList.find { it.packageName == pkg }?.appName
-                ?: suspicious.find { it.packageName == pkg }?.appName
-                ?: pkg)
+            val appName = pm.getApplicationLabel(packageInfo.applicationInfo).toString()
 
+            // 13 feature array exactly matching TFLite model expectations
             val features = floatArrayOf(
-                mic / maxMic,
-                cam / maxCam,
-                loc / maxLoc,
-                night / maxNight,
-                if (kl) 1f else 0f,
-                trig / maxTrig
+                permAudio,
+                permCamera,
+                permLocation,
+                totalPerms,
+                receiversCount,
+                servicesCount,
+                mic.toFloat(),
+                cam.toFloat(),
+                loc.toFloat(),
+                networkBytes,
+                night.toFloat(),
+                trig.toFloat(),
+                if (kl) 1f else 0f
             )
 
             AppFeatures(

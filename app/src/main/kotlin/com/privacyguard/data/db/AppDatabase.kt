@@ -2,22 +2,8 @@ package com.privacyguard.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.privacyguard.data.db.dao.AccessibilityDao
-import com.privacyguard.data.db.dao.CameraUsageDao
-import com.privacyguard.data.db.dao.LocationUsageDao
-import com.privacyguard.data.db.dao.MicUsageDao
-import com.privacyguard.data.db.dao.NetworkEventDao
-import com.privacyguard.data.db.dao.NightActivityDao
-import com.privacyguard.data.db.dao.PrivacyEventDao
-import com.privacyguard.data.db.dao.TriggerPairDao
-import com.privacyguard.data.db.entities.AccessibilityRecord
-import com.privacyguard.data.db.entities.AppCameraUsage
-import com.privacyguard.data.db.entities.AppLocationUsage
-import com.privacyguard.data.db.entities.AppMicUsage
-import com.privacyguard.data.db.entities.NetworkEvent
-import com.privacyguard.data.db.entities.NightActivity
-import com.privacyguard.data.db.entities.PrivacyEvent
-import com.privacyguard.data.db.entities.TriggerPair
+import com.privacyguard.data.db.dao.*
+import com.privacyguard.data.db.entities.*
 
 @Database(
     entities = [
@@ -28,9 +14,13 @@ import com.privacyguard.data.db.entities.TriggerPair
         NightActivity::class,
         TriggerPair::class,
         PrivacyEvent::class,
-        NetworkEvent::class
+        NetworkEvent::class,
+        DailyScore::class,
+        CellTowerLog::class,
+        KeystrokeProfile::class,
+        PhishingAlert::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -42,6 +32,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun triggerPairDao(): TriggerPairDao
     abstract fun privacyEventDao(): PrivacyEventDao
     abstract fun networkEventDao(): NetworkEventDao
+    abstract fun dailyScoreDao(): DailyScoreDao
+    abstract fun cellTowerDao(): CellTowerDao
+    abstract fun keystrokeProfileDao(): KeystrokeProfileDao
+    abstract fun phishingAlertDao(): PhishingAlertDao
 
     companion object {
         const val DATABASE_NAME = "privacy_guard_db"
